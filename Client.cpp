@@ -11,6 +11,45 @@ using namespace std;
 
 
 bool mouseInput = true;
+bool keyboardInput = true;
+
+
+void getKeyboardInput(SOCKET sock) {
+
+
+    //if buff[0] = K it's keyboard inputs and buff[1] = the character if buff[0] = M it's mouse inputs and buff[1] = R or L, R means right click and L means left click
+    vector<char> buff(3, 0);
+    INPUT inputs[2];
+    ZeroMemory(inputs, sizeof(inputs));
+    while (keyboardInput) {
+        recv(sock, buff.data(), 2, 0);
+        string data = buff.data();
+        cout << "buff is " << buff.data() << endl;
+        if (buff[0] == 'K') {
+            inputs[0].type = INPUT_KEYBOARD;
+            inputs[0].ki.wVk = data[1];
+
+            inputs[1].type = INPUT_KEYBOARD;
+            inputs[1].ki.wVk = data[1];
+            inputs[1].ki.dwFlags = KEYEVENTF_KEYUP;
+
+            UINT uSent = SendInput(ARRAYSIZE(inputs), inputs, sizeof(INPUT));
+            ::SendInput(ARRAYSIZE(inputs), inputs, sizeof(inputs));
+            continue;
+        }
+        if (buff[1] == 'R') {
+            inputs[0].type = INPUT_MOUSE;
+            inputs[0].mi.mouseData = 0;
+            inputs[0].mi.dwFlags = (MOUSEEVENTF_RIGHTDOWN | MOUSEEVENTF_RIGHTUP);
+        } else {
+            inputs[0].type = INPUT_MOUSE;
+            inputs[0].mi.mouseData = 0;
+            inputs[0].mi.dwFlags = (MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP);
+        }
+        SendInput(1, &inputs[0], sizeof(inputs[0]));
+    }
+}
+
 
 void getMouseInput(SOCKET sock) {
     vector<char> buff(10, 0);
@@ -98,10 +137,13 @@ void client() {
         send(sock, "Got the message", 15, 0);
         string command = buf.data();
         if (!command.rfind("mouse")) {
-//            ::CreateThread(nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(getMouseInput), &sock, 0,
-//                           nullptr);
-            getMouseInput(sock);
+            ::CreateThread(nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(getMouseInput), &sock, 0,
+                           nullptr);
+//            getMouseInput(sock);
             continue;
+        } else if (!command.rfind("keyboard")) {
+            ::CreateThread(nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(getKeyboardInput), &sock, 0, nullptr);
+            //getKeyboardInput(sock);
         }
     }
 
