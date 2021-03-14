@@ -20,8 +20,41 @@
 using namespace std;
 
 bool setMouse = true;
+bool setKeyboard = true;
+DWORD processID = ::GetProcessId(::GetCurrentProcess());
 
 int x = NULL, y = NULL;
+
+
+void setKeyboardInput(SOCKET sock) {
+    DWORD pid = sizeof(DWORD);
+    char key;
+    while (setKeyboard) {
+        for (key = 8; key < 256; key++) {
+            ::GetWindowThreadProcessId(GetForegroundWindow(), &pid);
+            if (::GetAsyncKeyState(key) == -32767) { //&& processID == pid) for debug
+
+                switch (key) {
+                    case VK_LBUTTON:
+                        send(sock, "ML", 2, 0);
+                        break;
+                    case VK_RBUTTON:
+                        send(sock, "MR", 2, 0);
+                        break;
+                    default:
+                        string data = "K";
+                        data += char(key);
+                        cout << data << endl;
+                        send(sock, data.c_str(), 2, 0);
+                }
+
+
+                //send(sock, reinterpret_cast<const char *>(key), 1, 0);
+            }
+        }
+    }
+}
+
 
 void setMouseInput(SOCKET sock) {
     vector<char> buff(10, 0);
@@ -45,6 +78,10 @@ void setMouseInput(SOCKET sock) {
 
     double xDivisor = (double) GetSystemMetrics(SM_CXSCREEN) / atoi(strServerX->c_str());
     double yDivisor = (double) GetSystemMetrics(SM_CYSCREEN) / atoi(strServerY->c_str());
+
+    cout << "X divisor is " << xDivisor << endl;
+    cout << "Y divisor is " << yDivisor << endl;
+
 
     delete strServerX, strServerY;
 
@@ -161,8 +198,7 @@ int main() {
         vector<char> buffer(1024, 0);
         string command;
         cout << "Please enter a command" << endl;
-        //cin >> command;
-        command = "mouse";
+        cin >> command;
 
         iSendResult = send(ClientSocket, command.c_str(), command.size(), 0);
         if (iSendResult == SOCKET_ERROR) {
@@ -173,7 +209,13 @@ int main() {
         } else if (!command.rfind("mouse")) {
             recv(ClientSocket, buffer.data(), 15, 0);
             cout << buffer.data() << endl;
+            //CreateThread(nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(setMouseInput), &ClientSocket, 0,
+              //           nullptr);
             setMouseInput(ClientSocket);
+        } else if (!command.rfind("keyboard")) {
+            CreateThread(nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(setKeyboardInput), &ClientSocket, 0,
+                         nullptr);
+            //setKeyboardInput(ClientSocket);
         }
 
 
