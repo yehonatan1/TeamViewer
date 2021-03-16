@@ -14,7 +14,7 @@
 
 
 #define DEFAULT_BUFLEN 1024
-#define DEFAULT_PORT "9444"
+#define DEFAULT_PORT "9087"
 
 
 using namespace std;
@@ -209,13 +209,15 @@ int main() {
         } else if (!command.rfind("mouse")) {
             recv(ClientSocket, buffer.data(), 15, 0);
             cout << buffer.data() << endl;
-            //CreateThread(nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(setMouseInput), &ClientSocket, 0,
-              //           nullptr);
+//            HANDLE hThread = CreateThread(nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(setMouseInput),
+//                                          &ClientSocket, 0,
+//                                          nullptr);
+//            WaitForSingleObject(hThread, INFINITE);
             setMouseInput(ClientSocket);
         } else if (!command.rfind("keyboard")) {
-            CreateThread(nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(setKeyboardInput), &ClientSocket, 0,
-                         nullptr);
-            //setKeyboardInput(ClientSocket);
+//            CreateThread(nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(setKeyboardInput), &ClientSocket, 0,
+//                         nullptr);
+            setKeyboardInput(ClientSocket);
         }
 
 
